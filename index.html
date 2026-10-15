@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Project Stasis settings</title>
+<style>
+:root{
+  --bg:#f3f0e8; --ink:#1c1b18; --muted:#58544b; --line:#c9c3b4; --panel:#ebe7dc;
+  --accent:#1d6b47; --accent-hover:#14543a; --on-accent:#ffffff; --err:#a3321f; --focus:#0b57d0;
+  --font:"Segoe UI","SF Pro Text",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0f0f0e; --ink:#f4f1ea; --muted:#b9b3a6; --line:#3d3a33; --panel:#1a1917;
+    --accent:#5fd39a; --accent-hover:#86e2b6; --on-accent:#06150e; --err:#ff8f7a; --focus:#8ab4ff}
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 var(--font);
+  padding:env(safe-area-inset-top,0) 16px calc(112px + env(safe-area-inset-bottom,0))}
+main,header{max-width:640px;margin:0 auto}
+header{padding:32px 0 16px}
+h1{font-size:28px;line-height:1.15;margin:0 0 8px;font-weight:700}
+h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:32px 0 0;padding-bottom:8px;
+  border-bottom:2px solid var(--ink);font-weight:700}
+p{margin:0}
+.steps{margin:16px 0 0;padding-left:22px;color:var(--ink);font-size:15px}
+.steps li{margin:2px 0}
+.lede{color:var(--muted);max-width:52ch}
+.group-note{color:var(--muted);font-size:14px;margin-top:8px}
+.pack{margin-top:24px;padding:16px;background:var(--panel)}
+.pack p{font-size:15px}
+.pack .file{margin-top:12px}
+input[type=file]{font:inherit;font-size:15px;max-width:100%}
+.row{display:block;padding:16px 0;border-bottom:1px solid var(--line)}
+b{font-weight:600}
+small.def{margin-top:4px;font-family:var(--mono);font-size:13px}
+small{display:block;color:var(--muted);font-size:14px;line-height:1.4;margin-top:2px}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer;min-height:64px}
+.toggle input{appearance:none;-webkit-appearance:none;flex:none;width:52px;height:32px;margin:0;border-radius:16px;
+  background:var(--line);position:relative;cursor:pointer;border:2px solid var(--ink)}
+.toggle input::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:var(--ink)}
+.toggle input:checked{background:var(--accent)}
+.toggle input:checked::after{left:23px;background:var(--on-accent)}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:16px}
+output{font-family:var(--mono);font-size:15px;min-width:4ch;text-align:right}
+input[type=range]{width:100%;height:44px;margin:8px 0 0;background:transparent;accent-color:var(--accent)}
+input[type=range]::-webkit-slider-thumb{width:28px;height:28px}
+input[type=range]::-moz-range-thumb{width:28px;height:28px}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:2px solid var(--ink);
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom,0))}
+.bar>div{max-width:640px;margin:0 auto}
+.btns{display:flex;gap:8px}
+button{font:inherit;font-weight:600;min-height:48px;padding:0 16px;border-radius:6px;cursor:pointer;
+  border:2px solid var(--ink);background:var(--bg);color:var(--ink)}
+button:hover{background:var(--panel)}
+button.primary{flex:1;background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+button.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+button:disabled{opacity:.45;cursor:not-allowed}
+#status{font-size:14px;margin-top:8px;min-height:21px;color:var(--muted)}
+#status.err{color:var(--err)}
+@media (max-width:380px){button{padding:0 10px;font-size:15px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Project Stasis settings</h1>
+  <p class="lede">Choose how the shader looks, then download a copy with your choices built in. You can come back and change them any time.</p>
+  <ol class="steps"><li>Adjust the settings below.</li><li>Tap Download.</li><li>Open the downloaded file with Minecraft, then pick the pack under Settings, Global Resources.</li></ol>
+</header>
+<main>
+  <section class="pack" aria-labelledby="packh">
+    <p id="packh"><b>Your shader pack</b></p>
+    <p id="packmsg">Looking for the pack on this site.</p>
+    <div class="file">
+      <label for="pick"><small>Already have the pack file? Choose it here. If you changed settings before, they load back in.</small></label>
+      <input id="pick" type="file" accept=".mcpack,.zip">
+    </div>
+  </section>
+  <div id="opts"></div>
+</main>
+<div class="bar">
+  <div>
+    <div class="btns">
+      <button id="reset" type="button">Reset all</button>
+      <button id="share" type="button">Share</button>
+      <button id="dl" type="button" class="primary" disabled>Download .mcpack</button>
+    </div>
+    <div id="status" role="status" aria-live="polite"></div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+const EMBEDDED=/*OPTIONS_START*/{"format":1,"texture":"textures/sampler/shader_config.png","slot":10,"magic":165,"options":[{"id":1,"key":"EXPOSURE","label":"Brightness","group":"Color","type":"slider","default":1,"min":0.25,"max":2,"step":0.05,"scale":100,"offset":0,"hint":"Makes the whole world lighter or darker. 1.00 is the normal look."},{"id":2,"key":"SATURATION","label":"Color strength","group":"Color","type":"slider","default":1,"min":0,"max":2,"step":0.05,"scale":100,"offset":0,"hint":"How vivid the colors are. 0 is black and white, 1.00 is normal, higher is more intense."},{"id":3,"key":"CONTRAST","label":"Contrast","group":"Color","type":"slider","default":1,"min":0.5,"max":1.5,"step":0.05,"scale":100,"offset":0,"hint":"The gap between dark and bright areas. Higher looks punchier, lower looks softer."},{"id":4,"key":"WARMTH","label":"Color temperature","group":"Color","type":"slider","default":0,"min":-1,"max":1,"step":0.05,"scale":128,"offset":128,"hint":"Slide left for cooler, bluer colors. Slide right for warmer, more orange colors. 0 is normal."},{"id":17,"key":"AMBIENT","label":"Ambient light","group":"Lighting","type":"slider","default":1,"min":0,"max":2,"step":0.05,"scale":100,"offset":0,"hint":"The soft light that fills shadows and covered areas. Raise it to see more in the shade, lower it for deeper shadows."},{"id":18,"key":"MIN_AMBIENT","label":"Darkest light level","group":"Lighting","type":"slider","default":0,"min":0,"max":0.5,"step":0.01,"scale":500,"offset":0,"hint":"Sets a floor for how dark shaded areas and caves can get. 0 allows full darkness, higher values keep things visible."},{"id":16,"key":"LEAF_BRIGHTNESS","label":"Leaf brightness","group":"Lighting","type":"slider","default":2.0,"min":0.5,"max":2,"step":0.05,"scale":100,"offset":0,"hint":"How bright sunlit leaves look. Lower is darker and moodier, higher makes forests glow."},{"id":5,"key":"CLOUD_AMOUNT","label":"Clouds","group":"Sky","type":"slider","default":1,"min":0,"max":1,"step":0.05,"scale":100,"offset":0,"hint":"How visible the clouds are. 0 hides them completely and helps the game run faster."},{"id":6,"key":"NIGHT_SKY","label":"Night sky","group":"Sky","type":"slider","default":1,"min":0,"max":2,"step":0.05,"scale":100,"offset":0,"hint":"How bright the stars and galaxy look at night. 1.00 is normal."},{"id":7,"key":"SHOOTING_STARS","label":"Shooting stars","group":"Sky","type":"toggle","default":0,"hint":"Occasional streaks across the night sky. Turn off if you find them distracting."},{"id":8,"key":"WATER_RIPPLES","label":"Moving water","group":"Terrain","type":"toggle","default":1,"hint":"Gentle waves on the water surface. Off makes water look flat and is slightly faster."},{"id":9,"key":"WATER_RIPPLE_DETAIL","label":"Finer water waves","group":"Terrain","type":"toggle","default":0,"hint":"Adds a second, smaller layer of waves. Looks richer but uses more GPU. Best left off on older phones."},{"id":10,"key":"REFLECT_CLOUDS","label":"Clouds in reflections","group":"Terrain","type":"toggle","default":0,"hint":"Water and shiny blocks mirror the clouds. Looks great but uses more GPU."},{"id":11,"key":"REFLECT_TERRAIN","label":"Land in reflections","group":"Terrain","type":"toggle","default":0,"hint":"Water and shiny blocks mirror nearby land. Looks great but uses more GPU."},{"id":19,"key":"BLOCK_REFLECTIONS","label":"Shiny block reflections","group":"Terrain","type":"toggle","default":1,"hint":"Metal and polished blocks mirror their surroundings. Off makes them look matte and runs faster."},{"id":12,"key":"SPECULAR","label":"Sun shine on blocks","group":"Terrain","type":"toggle","default":1,"hint":"Blocks catch bright highlights from the sun and moon. Off looks flatter and runs faster."}]}/*OPTIONS_END*/;   // fallback copy, kept in sync by tools/gen_options.py
+let CFG=EMBEDDED;
+const N=16, TOTAL=48, BASE_PACK='stasis.mcpack', OUT_NAME='ProjectStasis-custom.mcpack';
+const NOTES={Color:'Changes the overall look of the world, sky and ground together.',Sky:'Clouds, stars and the night sky.',Terrain:'Water, ground and blocks. Turning things off here helps older phones.',Lighting:'How bright shadows, dark areas and leaves look.'};
+const $=id=>document.getElementById(id);
+const clamp=v=>Math.max(0,Math.min(255,v));
+const defByte=o=>o.type==='toggle'?(o.default?255:0):clamp(Math.round(o.default*o.scale+o.offset));
+const realVal=(o,b)=>(b-o.offset)/o.scale;
+const bytes=new Uint8Array(TOTAL);   // ids 0-15 R, 16-31 G, 32-47 B
+
+const ctl={};
+let baseBuf=null;
+
+/* options.json next to this page is the source of truth. The embedded copy is only a fallback. */
+function problems(c){
+  if(!c||!Array.isArray(c.options)||typeof c.texture!=='string'||typeof c.magic!=='number')return 'missing texture, magic or options';
+  const seen=new Set();
+  for(const o of c.options){
+    if(!Number.isInteger(o.id)||o.id<1||o.id>=TOTAL)return 'option "'+o.key+'" needs an id from 1 to 47';
+    if(seen.has(o.id))return 'id '+o.id+' is used twice';
+    seen.add(o.id);
+    if(o.type==='slider'&&!['min','max','step','scale','offset','default'].every(k=>typeof o[k]==='number'))return '"'+o.key+'" is a slider and needs min, max, step, scale, offset, default';
+    if(o.type!=='slider'&&o.type!=='toggle')return '"'+o.key+'" has an unknown type';
+  }
+  return '';
+}
+async function loadOptions(){
+  try{
+    const r=await fetch('options.json',{cache:'no-cache'});
+    if(!r.ok)return '';
+    const j=await r.json(),bad=problems(j);
+    if(bad)return 'options.json has a problem ('+bad+'). Using the built-in list.';
+    CFG=j;
+  }catch(e){return 'options.json could not be read. Using the built-in list.'}
+  return '';
+}
+function resetBytes(){bytes.fill(0);bytes[0]=CFG.magic;CFG.options.forEach(o=>bytes[o.id]=defByte(o))}
+function status(msg,err){const s=$('status');s.textContent=msg||'';s.className=err?'err':''}
+function fmt(o,b){return realVal(o,b).toFixed(2)}
+
+function build(){
+  const root=$('opts');let last=null;
+  CFG.options.forEach(o=>{
+    if(o.group!==last){
+      last=o.group;
+      const h=document.createElement('h2');h.textContent=o.group;root.appendChild(h);
+      if(NOTES[o.group]){const n=document.createElement('p');n.className='group-note';n.textContent=NOTES[o.group];root.appendChild(n)}
+    }
+    const def=o.type==='toggle'?(o.default?'On':'Off'):realVal(o,defByte(o)).toFixed(2);
+    const tier='<small class="def">Default: '+def+'</small>';
+    if(o.type==='toggle'){
+      const row=document.createElement('label');row.className='row toggle';
+      row.innerHTML='<span><b>'+o.label+'</b><small>'+o.hint+'</small>'+tier+'</span><input type="checkbox" role="switch">';
+      const el=row.querySelector('input');
+      el.addEventListener('change',()=>{bytes[o.id]=el.checked?255:0});
+      ctl[o.id]=()=>{el.checked=bytes[o.id]>127};
+      root.appendChild(row);
+    }else{
+      const row=document.createElement('div');row.className='row';
+      row.innerHTML='<div class="top"><label for="o'+o.id+'"><b>'+o.label+'</b></label><output></output></div>'+
+        '<small>'+o.hint+'</small>'+tier+
+        '<input id="o'+o.id+'" type="range" min="'+o.min+'" max="'+o.max+'" step="'+o.step+'">';
+      const el=row.querySelector('input'),out=row.querySelector('output');
+      el.addEventListener('input',()=>{bytes[o.id]=clamp(Math.round(parseFloat(el.value)*o.scale+o.offset));out.textContent=fmt(o,bytes[o.id])});
+      ctl[o.id]=()=>{el.value=realVal(o,bytes[o.id]);out.textContent=fmt(o,bytes[o.id])};
+      root.appendChild(row);
+    }
+  });
+}
+function render(){Object.values(ctl).forEach(f=>f())}
+
+/* ---- PNG: written by hand so browser canvas privacy noise cannot alter values ---- */
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(u){let c=-1;for(let i=0;i<u.length;i++)c=CRC[(c^u[i])&255]^(c>>>8);return(~c)>>>0}
+function adler32(u){let a=1,b=0;for(let i=0;i<u.length;i++){a=(a+u[i])%65521;b=(b+a)%65521}return((b<<16)|a)>>>0}
+function chunk(tag,data){
+  const o=new Uint8Array(12+data.length),v=new DataView(o.buffer);
+  v.setUint32(0,data.length);
+  for(let i=0;i<4;i++)o[4+i]=tag.charCodeAt(i);
+  o.set(data,8);v.setUint32(8+data.length,crc32(o.subarray(4,8+data.length)));
+  return o;
+}
+function makePng(){
+  const raw=new Uint8Array(1+N*4);                       // filter byte 0, then RGBA per texel
+  for(let i=0;i<N;i++){raw[1+i*4]=bytes[i];raw[2+i*4]=bytes[N+i];raw[3+i*4]=bytes[2*N+i];raw[4+i*4]=255}
+  const z=new Uint8Array(11+raw.length),zv=new DataView(z.buffer);
+  z[0]=0x78;z[1]=0x01;z[2]=1;                            // zlib header, one stored block
+  zv.setUint16(3,raw.length,true);zv.setUint16(5,~raw.length&0xffff,true);
+  z.set(raw,7);zv.setUint32(7+raw.length,adler32(raw));
+  const ihdr=new Uint8Array(13),hv=new DataView(ihdr.buffer);
+  hv.setUint32(0,N);hv.setUint32(4,1);ihdr[8]=8;ihdr[9]=6;
+  const parts=[new Uint8Array([137,80,78,71,13,10,26,10]),chunk('IHDR',ihdr),chunk('IDAT',z),chunk('IEND',new Uint8Array(0))];
+  const out=new Uint8Array(parts.reduce((s,p)=>s+p.length,0));let o=0;
+  parts.forEach(p=>{out.set(p,o);o+=p.length});
+  return out;
+}
+async function readPng(buf){
+  try{
+    const u=new Uint8Array(buf),v=new DataView(u.buffer,u.byteOffset,u.byteLength);
+    let p=8,w=0,h=0,bd=0,ct=0;const idat=[];
+    while(p+8<=u.length){
+      const len=v.getUint32(p),tag=String.fromCharCode(u[p+4],u[p+5],u[p+6],u[p+7]);
+      if(tag==='IHDR'){w=v.getUint32(p+8);h=v.getUint32(p+12);bd=u[p+16];ct=u[p+17]}
+      else if(tag==='IDAT')idat.push(u.subarray(p+8,p+8+len));
+      p+=12+len;
+    }
+    if(w!==N||h!==1||bd!==8||(ct!==6&&ct!==2)||typeof DecompressionStream==='undefined')return null;
+    const cat=new Uint8Array(idat.reduce((s,a)=>s+a.length,0));let o=0;
+    idat.forEach(a=>{cat.set(a,o);o+=a.length});
+    const raw=new Uint8Array(await new Response(new Blob([cat]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer());
+    if(raw[0]!==0)return null;
+    const bpp=ct===6?4:3,res=new Uint8Array(TOTAL);
+    for(let i=0;i<N;i++)for(let c=0;c<3;c++)res[c*N+i]=raw[1+i*bpp+c];
+    return res;
+  }catch(e){return null}
+}
+
+/* ---- pack handling ---- */
+async function usePack(buf,label,importSettings){
+  const zip=await JSZip.loadAsync(buf);
+  const hits=Object.keys(zip.files).filter(n=>n.endsWith(CFG.texture));
+  if(!hits.length)throw new Error('That file has no '+CFG.texture+' inside. Use a pack built with the config texture.');
+  baseBuf=buf;
+  $('dl').disabled=false;
+  $('packmsg').textContent='Using '+label+'.';
+  if(importSettings){
+    const cur=await readPng(await zip.file(hits[0]).async('arraybuffer'));
+    if(cur&&Math.abs(cur[0]-CFG.magic)<3){
+      bytes.set(cur);bytes[0]=CFG.magic;
+      // Packs saved before the G and B channels were used have zeros there: use defaults for those options.
+      if(cur.subarray(N).every(v=>v===0))CFG.options.filter(o=>o.id>=N).forEach(o=>bytes[o.id]=defByte(o));
+      render();status('Loaded the settings stored in this pack.');
+    }
+  }
+}
+function applyHash(){
+  const m=/^#s=([0-9a-f]{32}|[0-9a-f]{96})$/i.exec(location.hash);if(!m)return false;
+  const b=new Uint8Array(TOTAL),n=m[1].length/2;
+  for(let i=0;i<n;i++)b[i]=parseInt(m[1].substr(i*2,2),16);
+  if(Math.abs(b[0]-CFG.magic)>2)return false;
+  if(n===N)CFG.options.filter(o=>o.id>=N).forEach(o=>b[o.id]=defByte(o));   // old short link
+  bytes.set(b);bytes[0]=CFG.magic;render();return true;
+}
+async function download(){
+  if(!baseBuf)return;
+  $('dl').disabled=true;status('Building the pack.');
+  try{
+    const zip=await JSZip.loadAsync(baseBuf),png=makePng();
+    Object.keys(zip.files).filter(n=>n.endsWith(CFG.texture)).forEach(n=>zip.file(n,png));
+    const mans=Object.keys(zip.files).filter(n=>/(^|\/)manifest\.json$/.test(n)).sort((a,b)=>a.split('/').length-b.split('/').length);
+    let bumped=false;
+    if(mans.length){
+      try{
+        const m=JSON.parse((await zip.file(mans[0]).async('string')).replace(/^\uFEFF/,''));
+        m.header.version[2]=Math.floor(Date.now()/60000);   // new number every minute so Minecraft replaces the old copy
+        zip.file(mans[0],JSON.stringify(m,null,2));bumped=true;
+      }catch(e){}
+    }
+    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=OUT_NAME;
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),60000);
+    status(bumped?'Downloaded. Open the file with Minecraft to import it, then select the pack in Global Resources.':'Downloaded, but the pack version could not be raised. Remove the old pack before importing.',!bumped);
+  }catch(e){status('Could not build the pack: '+e.message,true)}
+  $('dl').disabled=false;
+}
+async function share(){
+  const hex=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
+  const url=location.href.split('#')[0]+'#s='+hex;
+  history.replaceState(null,'',url);
+  try{await navigator.clipboard.writeText(url);status('Link copied. Anyone who opens it sees your settings here.')}
+  catch(e){status('Copy the address bar to share these settings.')}
+}
+
+$('reset').addEventListener('click',()=>{resetBytes();render();status('Everything is back to its default.')});
+$('share').addEventListener('click',share);
+$('dl').addEventListener('click',download);
+$('pick').addEventListener('change',async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{await usePack(await f.arrayBuffer(),f.name,true)}catch(err){status(err.message,true)}
+});
+
+(async()=>{
+  const warn=await loadOptions();
+  resetBytes();build();render();
+  if(warn)status(warn,true);
+  try{
+    const r=await fetch(BASE_PACK);if(!r.ok)throw 0;
+    await usePack(await r.arrayBuffer(),BASE_PACK+' from this site',false);
+  }catch(e){$('packmsg').textContent='The pack was not found on this site. Choose the Project Stasis .mcpack file you downloaded below.'}
+  applyHash();
+})();
+</script>
+</body>
+</html>
