@@ -50,6 +50,11 @@ input[type=range]{width:100%;height:44px;margin:8px 0 0;background:transparent;a
 input[type=range]::-webkit-slider-thumb{width:28px;height:28px}
 input[type=range]::-moz-range-thumb{width:28px;height:28px}
 :focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.prog{height:10px;margin-top:12px;border:2px solid var(--ink);border-radius:5px;overflow:hidden;background:var(--bg)}
+.prog i{display:block;height:100%;width:0;background:var(--accent)}
+.prog.wait i{width:35%;animation:slide 1s linear infinite}
+@keyframes slide{from{margin-left:-35%}to{margin-left:100%}}
+@media (prefers-reduced-motion:reduce){.prog.wait i{animation:none;width:100%}}
 .bar{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:2px solid var(--ink);
   padding:12px 16px calc(12px + env(safe-area-inset-bottom,0))}
 .bar>div{max-width:640px;margin:0 auto}
@@ -75,9 +80,10 @@ button:disabled{opacity:.45;cursor:not-allowed}
   <section class="pack" aria-labelledby="packh">
     <p id="packh"><b>Your shader pack</b></p>
     <p id="packmsg">Looking for the pack on this site.</p>
+    <div class="prog" id="packprog" role="progressbar" aria-label="Pack download" aria-valuemin="0" aria-valuemax="100" hidden><i></i></div>
     <div class="file">
       <label for="pick"><small>Already have the pack file? Choose it here. If you changed settings before, they load back in.</small></label>
-      <input id="pick" type="file" accept=".mcpack,.zip">
+      <input id="pick" type="file" accept=".mcpack">
     </div>
   </section>
   <div id="opts"></div>
@@ -89,14 +95,15 @@ button:disabled{opacity:.45;cursor:not-allowed}
       <button id="share" type="button">Share</button>
       <button id="dl" type="button" class="primary" disabled>Download .mcpack</button>
     </div>
+    <div class="prog" id="buildprog" role="progressbar" aria-label="Building your pack" aria-valuemin="0" aria-valuemax="100" hidden><i></i></div>
     <div id="status" role="status" aria-live="polite"></div>
   </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
-const EMBEDDED=/*OPTIONS_START*/{"format":1,"texture":"textures/sampler/shader_config.png","slot":10,"magic":165,"options":[{"id":1,"key":"EXPOSURE","label":"Brightness","group":"Color","type":"slider","default":1,"min":0.25,"max":2,"step":0.05,"scale":100,"offset":0,"hint":"Makes the whole world lighter or darker. 1.00 is the normal look."},{"id":2,"key":"SATURATION","label":"Color strength","group":"Color","type":"slider","default":1,"min":0,"max":2,"step":0.05,"scale":100,"offset":0,"hint":"How vivid the colors are. 0 is black and white, 1.00 is normal, higher is more intense."},{"id":3,"key":"CONTRAST","label":"Contrast","group":"Color","type":"slider","default":1,"min":0.5,"max":1.5,"step":0.05,"scale":100,"offset":0,"hint":"The gap between dark and bright areas. Higher looks punchier, lower looks softer."},{"id":4,"key":"WARMTH","label":"Color temperature","group":"Color","type":"slider","default":0,"min":-1,"max":1,"step":0.05,"scale":128,"offset":128,"hint":"Slide left for cooler, bluer colors. Slide right for warmer, more orange colors. 0 is normal."},{"id":17,"key":"AMBIENT","label":"Ambient light","group":"Lighting","type":"slider","default":1,"min":0,"max":2,"step":0.05,"scale":100,"offset":0,"hint":"The soft light that fills shadows and covered areas. Raise it to see more in the shade, lower it for deeper shadows."},{"id":18,"key":"MIN_AMBIENT","label":"Darkest light level","group":"Lighting","type":"slider","default":0,"min":0,"max":0.5,"step":0.01,"scale":500,"offset":0,"hint":"Sets a floor for how dark shaded areas and caves can get. 0 allows full darkness, higher values keep things visible."},{"id":16,"key":"LEAF_BRIGHTNESS","label":"Leaf brightness","group":"Lighting","type":"slider","default":2.0,"min":0.5,"max":2,"step":0.05,"scale":100,"offset":0,"hint":"How bright sunlit leaves look. Lower is darker and moodier, higher makes forests glow."},{"id":5,"key":"CLOUD_AMOUNT","label":"Clouds","group":"Sky","type":"slider","default":1,"min":0,"max":1,"step":0.05,"scale":100,"offset":0,"hint":"How visible the clouds are. 0 hides them completely and helps the game run faster."},{"id":6,"key":"NIGHT_SKY","label":"Night sky","group":"Sky","type":"slider","default":1,"min":0,"max":2,"step":0.05,"scale":100,"offset":0,"hint":"How bright the stars and galaxy look at night. 1.00 is normal."},{"id":7,"key":"SHOOTING_STARS","label":"Shooting stars","group":"Sky","type":"toggle","default":0,"hint":"Occasional streaks across the night sky. Turn off if you find them distracting."},{"id":8,"key":"WATER_RIPPLES","label":"Moving water","group":"Terrain","type":"toggle","default":1,"hint":"Gentle waves on the water surface. Off makes water look flat and is slightly faster."},{"id":9,"key":"WATER_RIPPLE_DETAIL","label":"Finer water waves","group":"Terrain","type":"toggle","default":0,"hint":"Adds a second, smaller layer of waves. Looks richer but uses more GPU. Best left off on older phones."},{"id":10,"key":"REFLECT_CLOUDS","label":"Clouds in reflections","group":"Terrain","type":"toggle","default":0,"hint":"Water and shiny blocks mirror the clouds. Looks great but uses more GPU."},{"id":11,"key":"REFLECT_TERRAIN","label":"Land in reflections","group":"Terrain","type":"toggle","default":0,"hint":"Water and shiny blocks mirror nearby land. Looks great but uses more GPU."},{"id":19,"key":"BLOCK_REFLECTIONS","label":"Shiny block reflections","group":"Terrain","type":"toggle","default":1,"hint":"Metal and polished blocks mirror their surroundings. Off makes them look matte and runs faster."},{"id":12,"key":"SPECULAR","label":"Sun shine on blocks","group":"Terrain","type":"toggle","default":1,"hint":"Blocks catch bright highlights from the sun and moon. Off looks flatter and runs faster."}]}/*OPTIONS_END*/;   // fallback copy, kept in sync by tools/gen_options.py
+const EMBEDDED=/*OPTIONS_START*/{"format":1,"texture":"textures/sampler/shader_config.png","slot":10,"magic":165,"options":[{"id":1,"key":"EXPOSURE","label":"Brightness","group":"Color","type":"slider","default":1,"min":0.25,"max":2,"step":0.05,"scale":100,"offset":0,"hint":"Makes the whole world lighter or darker. 1.00 is the normal look."},{"id":2,"key":"SATURATION","label":"Color strength","group":"Color","type":"slider","default":1,"min":0,"max":2,"step":0.05,"scale":100,"offset":0,"hint":"How vivid the colors are. 0 is black and white, 1.00 is normal, higher is more intense."},{"id":3,"key":"CONTRAST","label":"Contrast","group":"Color","type":"slider","default":1,"min":0.5,"max":1.5,"step":0.05,"scale":100,"offset":0,"hint":"The gap between dark and bright areas. Higher looks punchier, lower looks softer."},{"id":4,"key":"WARMTH","label":"Color temperature","group":"Color","type":"slider","default":0,"min":-1,"max":1,"step":0.05,"scale":128,"offset":128,"hint":"Slide left for cooler, bluer colors. Slide right for warmer, more orange colors. 0 is normal."},{"id":17,"key":"AMBIENT","label":"Ambient light","group":"Lighting","type":"slider","default":1,"min":0,"max":2,"step":0.05,"scale":100,"offset":0,"hint":"The soft light that fills shadows and covered areas. Raise it to see more in the shade, lower it for deeper shadows."},{"id":18,"key":"MIN_AMBIENT","label":"Darkest light level","group":"Lighting","type":"slider","default":0.12,"min":0,"max":0.5,"step":0.01,"scale":500,"offset":0,"hint":"Sets a floor for how dark shaded areas and caves can get. 0 allows full darkness, higher values keep things visible."},{"id":16,"key":"LEAF_BRIGHTNESS","label":"Leaf brightness","group":"Lighting","type":"slider","default":1.75,"min":0.5,"max":2,"step":0.05,"scale":100,"offset":0,"hint":"How bright sunlit leaves look. Lower is darker and moodier, higher makes forests glow."},{"id":5,"key":"CLOUD_AMOUNT","label":"Clouds","group":"Sky","type":"slider","default":1,"min":0,"max":1,"step":0.05,"scale":100,"offset":0,"hint":"How visible the clouds are. 0 hides them completely and helps the game run faster."},{"id":6,"key":"NIGHT_SKY","label":"Night sky","group":"Sky","type":"slider","default":1,"min":0,"max":2,"step":0.05,"scale":100,"offset":0,"hint":"How bright the stars and galaxy look at night. 1.00 is normal."},{"id":7,"key":"SHOOTING_STARS","label":"Shooting stars","group":"Sky","type":"toggle","default":0,"hint":"Occasional streaks across the night sky. Turn off if you find them distracting."},{"id":8,"key":"WATER_RIPPLES","label":"Moving water","group":"Terrain","type":"toggle","default":1,"hint":"Gentle waves on the water surface. Off makes water look flat and is slightly faster."},{"id":9,"key":"WATER_RIPPLE_DETAIL","label":"Finer water waves","group":"Terrain","type":"toggle","default":0,"hint":"Adds a second, smaller layer of waves. Looks richer but uses more GPU. Best left off on older phones."},{"id":10,"key":"REFLECT_CLOUDS","label":"Clouds in reflections","group":"Terrain","type":"toggle","default":0,"hint":"Water and shiny blocks mirror the clouds. Looks great but uses more GPU."},{"id":11,"key":"REFLECT_TERRAIN","label":"Land in reflections","group":"Terrain","type":"toggle","default":0,"hint":"Water and shiny blocks mirror nearby land. Looks great but uses more GPU."},{"id":19,"key":"BLOCK_REFLECTIONS","label":"Shiny block reflections","group":"Terrain","type":"toggle","default":0,"hint":"Metal and polished blocks mirror their surroundings. Off makes them look matte and runs faster."},{"id":12,"key":"SPECULAR","label":"Sun shine on blocks","group":"Terrain","type":"toggle","default":1,"hint":"Blocks catch bright highlights from the sun and moon. Off looks flatter and runs faster."}]}/*OPTIONS_END*/;   // fallback copy, kept in sync by tools/gen_options.py
 let CFG=EMBEDDED;
-const N=16, TOTAL=48, BASE_PACK='stasis.mcpack', OUT_NAME='ProjectStasis-custom.mcpack';
+const N=16, TOTAL=48, BASE_PACKS=['stasis.mcpack.zip','stasis.mcpack'], OUT_NAME='stasis.mcpack';   // base pack is looked up under these names, the download is always .mcpack
 const NOTES={Color:'Changes the overall look of the world, sky and ground together.',Sky:'Clouds, stars and the night sky.',Terrain:'Water, ground and blocks. Turning things off here helps older phones.',Lighting:'How bright shadows, dark areas and leaves look.'};
 const $=id=>document.getElementById(id);
 const clamp=v=>Math.max(0,Math.min(255,v));
@@ -129,6 +136,23 @@ async function loadOptions(){
     CFG=j;
   }catch(e){return 'options.json could not be read. Using the built-in list.'}
   return '';
+}
+/* progress bar: pct 0-100, null = hide, 'wait' = size unknown */
+function setProg(id,pct){
+  const p=$(id);
+  p.hidden=pct===null;
+  p.classList.toggle('wait',pct==='wait');
+  if(typeof pct==='number'){p.firstElementChild.style.width=Math.min(100,pct)+'%';p.setAttribute('aria-valuenow',Math.round(Math.min(100,pct)))}
+}
+async function fetchPack(url,onProgress){
+  const r=await fetch(url,{cache:'no-cache'});
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const total=+r.headers.get('content-length')||0;
+  if(!r.body||!r.body.getReader){onProgress(0,0);return r.arrayBuffer()}
+  const rd=r.body.getReader(),parts=[];let got=0;
+  for(;;){const s=await rd.read();if(s.done)break;parts.push(s.value);got+=s.value.length;onProgress(got,total)}
+  const out=new Uint8Array(got);let o=0;parts.forEach(c=>{out.set(c,o);o+=c.length});
+  return out.buffer;
 }
 function resetBytes(){bytes.fill(0);bytes[0]=CFG.magic;CFG.options.forEach(o=>bytes[o.id]=defByte(o))}
 function status(msg,err){const s=$('status');s.textContent=msg||'';s.className=err?'err':''}
@@ -237,9 +261,19 @@ function applyHash(){
   if(n===N)CFG.options.filter(o=>o.id>=N).forEach(o=>b[o.id]=defByte(o));   // old short link
   bytes.set(b);bytes[0]=CFG.magic;render();return true;
 }
+/* Small, always-increasing version: [major, base minor + days since 2026-01-01, minute of the day].
+   Keeps every number small, and Minecraft treats each export as newer than the last one. */
+function bumpVersion(v){
+  const d=new Date(),day=Math.floor((Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())-Date.UTC(2026,0,1))/864e5);
+  const isStr=typeof v==='string';
+  const a=(isStr?v.split('.'):Array.isArray(v)?v:[1,0,0]).map(n=>parseInt(n,10)||0);
+  while(a.length<3)a.push(0);
+  const out=[a[0],a[1]+day,d.getUTCHours()*60+d.getUTCMinutes()];
+  return isStr?out.join('.'):out;
+}
 async function download(){
   if(!baseBuf)return;
-  $('dl').disabled=true;status('Building the pack.');
+  $('dl').disabled=true;$('dl').textContent='Building...';status('Building your pack. Keep this page open.');setProg('buildprog','wait');
   try{
     const zip=await JSZip.loadAsync(baseBuf),png=makePng();
     Object.keys(zip.files).filter(n=>n.endsWith(CFG.texture)).forEach(n=>zip.file(n,png));
@@ -248,16 +282,16 @@ async function download(){
     if(mans.length){
       try{
         const m=JSON.parse((await zip.file(mans[0]).async('string')).replace(/^\uFEFF/,''));
-        m.header.version[2]=Math.floor(Date.now()/60000);   // new number every minute so Minecraft replaces the old copy
+        m.header.version=bumpVersion(m.header.version);   // new number each export so Minecraft replaces the old copy
         zip.file(mans[0],JSON.stringify(m,null,2));bumped=true;
       }catch(e){}
     }
-    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'});
+    const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE',mimeType:'application/octet-stream'},m=>{setProg('buildprog',m.percent);status('Building your pack: '+Math.round(m.percent)+'%')});
     const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=OUT_NAME;
     document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),60000);
-    status(bumped?'Downloaded. Open the file with Minecraft to import it, then select the pack in Global Resources.':'Downloaded, but the pack version could not be raised. Remove the old pack before importing.',!bumped);
+    status(bumped?'Saved as '+OUT_NAME+'. Open it with Minecraft to import it, then select the pack in Global Resources.':'Downloaded, but the pack version could not be raised. Remove the old pack before importing.',!bumped);
   }catch(e){status('Could not build the pack: '+e.message,true)}
-  $('dl').disabled=false;
+  setProg('buildprog',null);$('dl').textContent='Download .mcpack';$('dl').disabled=false;
 }
 async function share(){
   const hex=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');
@@ -272,6 +306,7 @@ $('share').addEventListener('click',share);
 $('dl').addEventListener('click',download);
 $('pick').addEventListener('change',async e=>{
   const f=e.target.files[0];if(!f)return;
+  if(!/\.mcpack$/i.test(f.name)){status('Please choose a .mcpack file.',true);e.target.value='';return}
   try{await usePack(await f.arrayBuffer(),f.name,true)}catch(err){status(err.message,true)}
 });
 
@@ -279,10 +314,21 @@ $('pick').addEventListener('change',async e=>{
   const warn=await loadOptions();
   resetBytes();build();render();
   if(warn)status(warn,true);
-  try{
-    const r=await fetch(BASE_PACK);if(!r.ok)throw 0;
-    await usePack(await r.arrayBuffer(),BASE_PACK+' from this site',false);
-  }catch(e){$('packmsg').textContent='The pack was not found on this site. Choose the Project Stasis .mcpack file you downloaded below.'}
+  let loaded=false;
+  for(const name of BASE_PACKS){
+    try{
+      $('packmsg').textContent='Downloading '+name+'.';
+      setProg('packprog','wait');
+      const buf=await fetchPack(name,(got,total)=>{
+        if(total){setProg('packprog',got/total*100);$('packmsg').textContent='Downloading '+name+': '+Math.min(100,Math.round(got/total*100))+'% ('+(got/1048576).toFixed(1)+' MB)'}
+        else{setProg('packprog','wait');$('packmsg').textContent='Downloading '+name+': '+(got/1048576).toFixed(1)+' MB'}
+      });
+      await usePack(buf,name+' from this site',false);
+      loaded=true;break;
+    }catch(e){}
+  }
+  setProg('packprog',null);
+  if(!loaded)$('packmsg').textContent='The pack was not found on this site. Choose your .mcpack file below.';
   applyHash();
 })();
 </script>
